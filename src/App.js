@@ -87,7 +87,7 @@ const VideoDownloader = () => {
     }
   };
 
-  // Analyse de vidéo avec vraie API
+  // Analyse de vidéo avec vraie API + debug
   const analyzeVideo = async () => {
     if (!url.trim()) {
       addLog('Veuillez entrer une URL valide', 'error');
@@ -107,6 +107,8 @@ const VideoDownloader = () => {
     addLog('Analyse de la vidéo en cours...', 'info');
     
     try {
+      addLog('🔗 Connexion à l\'API...', 'info');
+      
       // Appel à l'API Cobalt (gratuite)
       const response = await fetch('https://api.cobalt.tools/api/json', {
         method: 'POST',
@@ -123,14 +125,21 @@ const VideoDownloader = () => {
         })
       });
 
+      addLog(`📡 Réponse API: ${response.status}`, 'info');
+
       if (!response.ok) {
-        throw new Error('Erreur de connexion à l\'API');
+        throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const data = await response.json();
+      addLog(`📦 Données reçues: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
       
-      if (data.status === 'error' || !data.url) {
-        throw new Error(data.text || 'Impossible d\'analyser cette vidéo');
+      if (data.status === 'error') {
+        throw new Error(data.text || 'Erreur API inconnue');
+      }
+
+      if (!data.url) {
+        throw new Error('Aucune URL de téléchargement fournie par l\'API');
       }
 
       // Succès - création de l'objet videoInfo
@@ -142,19 +151,49 @@ const VideoDownloader = () => {
         views: "Disponible",
         uploadDate: new Date().toLocaleDateString(),
         downloadUrl: data.url,
-        audioUrl: data.audio || data.url
+        audioUrl: data.audio || data.url,
+        rawData: data // Pour debug
       });
       
       addLog('✅ Vidéo analysée avec succès!', 'success');
+      addLog(`🔗 URL de téléchargement: ${data.url.substring(0, 50)}...`, 'info');
       setSelectedQuality(audioOnly ? audioQualities[0].id : qualities[0].id);
       
     } catch (error) {
-      addLog(`❌ Erreur: ${error.message}`, 'error');
-      addLog('💡 Vérifiez que l\'URL est correcte et publique', 'info');
+      addLog(`❌ Erreur API: ${error.message}`, 'error');
       
-      // Mode fallback avec simulation
-      addLog('🔄 Activation du mode démo...', 'info');
-      setTimeout(() => {
+      // Test avec une API alternative
+      addLog('🔄 Test avec API alternative...', 'info');
+      try {
+        // API alternative simple (CORS peut poser problème)
+        const testResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        
+        if (testResponse.ok) {
+          const testData = await testResponse.json();
+          addLog('✅ URL YouTube valide détectée', 'success');
+          
+          // Mode simulation avec vraie métadonnée
+          setVideoInfo({
+            title: testData.title || extractTitleFromUrl(url),
+            duration: "Métadonnées disponibles",
+            thumbnail: testData.thumbnail_url || "https://via.placeholder.com/320x180/f59e0b/ffffff?text=Mode+Demo",
+            uploader: testData.author_name || extractChannelFromUrl(url),
+            views: "Demo",
+            uploadDate: new Date().toLocaleDateString(),
+            downloadUrl: null, // Pas de vrai téléchargement
+            isDemo: true
+          });
+          
+          addLog('🎭 Mode démo activé avec vraies métadonnées', 'success');
+          setSelectedQuality(audioOnly ? audioQualities[0].id : qualities[0].id);
+        } else {
+          throw new Error('API alternative échouée');
+        }
+        
+      } catch (fallbackError) {
+        addLog('🔄 Activation du mode démo simple...', 'info');
+        
+        // Mode démo simple
         setVideoInfo({
           title: "Mode Démo - " + extractTitleFromUrl(url),
           duration: "15:30",
@@ -162,11 +201,13 @@ const VideoDownloader = () => {
           uploader: extractChannelFromUrl(url),
           views: "Demo",
           uploadDate: new Date().toLocaleDateString(),
-          downloadUrl: null // Pas de vrai téléchargement en mode démo
+          downloadUrl: null,
+          isDemo: true
         });
-        addLog('✅ Mode démo activé', 'success');
+        
+        addLog('✅ Mode démo simple activé', 'success');
         setSelectedQuality(audioOnly ? audioQualities[0].id : qualities[0].id);
-      }, 1000);
+      }
     } finally {
       setIsAnalyzing(false);
     }
