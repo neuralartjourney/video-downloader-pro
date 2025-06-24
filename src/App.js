@@ -1,6 +1,6 @@
 // src/App.js - REMPLACEZ TOUT LE CONTENU PAR CECI
 import React, { useState, useEffect } from 'react';
-import { Download, Video, Music, RefreshCw, CheckCircle, AlertCircle, Folder, Play, ExternalLink } from 'lucide-react';
+import { Video, Music, RefreshCw, CheckCircle, AlertCircle, Play, ExternalLink } from 'lucide-react';
 import './App.css';
 
 // Composant pour les annonces (sera remplacé par les vraies pubs plus tard)
