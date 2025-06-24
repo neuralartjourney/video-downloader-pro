@@ -26,7 +26,6 @@ const VideoDownloader = () => {
   const [videoInfo, setVideoInfo] = useState(null);
   const [selectedQuality, setSelectedQuality] = useState('');
   const [audioOnly, setAudioOnly] = useState(false);
-  const [downloadPath, setDownloadPath] = useState('/Downloads');
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
   
@@ -247,19 +246,7 @@ const VideoDownloader = () => {
     }
   };
 
-  // Sélection de dossier (simulation pour UX)
-  const selectDownloadFolder = () => {
-    const folders = [
-      '/Downloads',
-      '/Documents/Videos',
-      '/Desktop/Videos',
-      '/Videos'
-    ];
-    
-    const randomFolder = folders[Math.floor(Math.random() * folders.length)];
-    setDownloadPath(randomFolder);
-    addLog(`📁 Dossier sélectionné: ${randomFolder}`, 'info');
-  };
+
 
   const getLogIcon = (type) => {
     switch (type) {
@@ -429,19 +416,13 @@ const VideoDownloader = () => {
               </div>
             </div>
 
-            {/* Download Path */}
+            {/* Download Info */}
             <div className="mb-6">
-              <label className="text-white font-medium mb-2 block">Dossier de destination:</label>
+              <label className="text-white font-medium mb-2 block">Téléchargement:</label>
               <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
-                <Folder className="w-5 h-5 text-slate-400" />
-                <span className="text-slate-300 flex-1">{downloadPath}</span>
-                <button 
-                  type="button"
-                  onClick={selectDownloadFolder}
-                  className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-all duration-300"
-                >
-                  Parcourir
-                </button>
+                <Folder className="w-5 h-5 text-green-400" />
+                <span className="text-slate-300 flex-1">Sera téléchargé dans votre dossier Downloads</span>
+                <span className="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">Auto</span>
               </div>
             </div>
 
